@@ -1,0 +1,1788 @@
+
+
+
+Index:
+
+=>Number Theory
+  --seive
+  --prime fact
+  --milar rabin primality test
+  --number of divisor
+  --sum of divisor
+  --phi 
+
+=>Graph
+  --BFS
+  --Dijkstra
+  --Bellman Ford
+  --Floyd-Warshall
+  --DFS
+  --MST
+  --Max Flow
+  --articulation-point
+  --bridge
+
+=>Data Structure
+  --Segment Tree (without propagation)
+  --Segment Tree (with propagation)
+
+
+=> Z Algo
+
+
+=>STL
+  --String Stream
+
+=>Short Note
+  --Starling Num of 2nd Kind
+  --Legendre's Theorem
+
+
+
+
+
+________________________START FROM______________________________
+___________________________HERE_________________________________
+
+
+                            ==================================
+                                    Number Theory
+                            ==================================
+
+
+----------------------------------
+Sieve (Range 10^6, O(sqrt(N))
+----------------------------------
+
+#define mx 1000000
+vector<ll> prime;
+bool vis[mx];
+void sieve(){
+    ll i,j,x;
+    x=sqrt(mx);
+    for(i=3; i<x; i++){
+        if(!vis[i]){
+            for(j=i*i; j<mx; j+=2*i){
+                vis[j]=1;
+            }
+        }
+    }
+    prime.pb(2);
+    for(i=3; i<mx; i+=2){
+        if(!vis[i]){
+            prime.pb(i);
+        }
+    }
+}
+
+
+#####------>O(<N)
+
+
+
+int prime[mxn],idx;
+bool vis[mxn];
+
+void get_prime(){
+    idx=0;
+    ll cnt=0;
+    for(int i=2; i<mxn; i++){
+        if(vis[i]==false){
+            prime[++idx]=i;
+        }
+        for(int j=1; j<=idx and i*prime[j]<=mxn; j++){
+            vis[i*prime[j]]=true;
+            cnt++;
+            if(i%prime[j]==0) break;
+        }
+    }
+    cout<<cnt<<endl;
+}
+
+
+
+
+-----------------------------------
+Num of Divisor of N   -->O(sqrt(N))
+-----------------------------------
+//Need seive to precompute prime
+
+ll NOD(ll n){
+    ll i,j;
+    ll root=sqrt(n);
+    ll ret = 1;
+    for(i=0; i<prime.size() and prime[i]<=root; i++){
+        if(n%prime[i]==0){
+            ll cnt=1;
+            while(n%prime[i]==0){
+                cnt++;
+                n/=prime[i];
+            }
+            ret*=cnt;
+            root=sqrt(n);
+        }
+    }
+    if(n>1) ret*=2;
+    return ret;
+}
+
+
+
+----------------------------------------
+Numbers of Divisor from 1 to N (10^6)
+----------------------------------------
+
+#define mx 1000000  // --> O( N*log(N) )
+ll divisor[mx+2];
+
+void Num_of_Divisor(){
+    ll i,j;
+    for(i=1; i<=mx; i++){
+        for(j=i; j<=mx; j+=i){
+            divisor[j]++;
+        }
+    }
+}
+
+
+
+
+
+
+
+---------------------------------
+millar robin primility test
+---------------------------------
+
+ll power(ll x, ll y, ll p){
+    ll res=1;
+    x=x%p;
+    while(y>0){
+        if(y & 1){
+            res=(res*x)%p;
+        }
+        y=y>>1;
+        x=(x*x)%p;
+    }
+    return res;
+}
+
+
+bool mt(ll d, ll n){
+    ll a=2+rand()%(n-4);
+    ll x=power(a,d,n);
+    if(x==1 || x==n-1) return true;
+
+    while(d!=n-1){
+        x=(x*x)%n;
+        d*=2;
+        if(x==1) return false;
+        if(x==n-1) return true;
+    }
+    return false;
+}
+
+bool isp(ll n, ll k){
+    if(n<=1 || n==4) return false;
+    if(n<=3) return true;
+
+    ll d=n-1;
+
+    while(d%2==0){
+        d/=2;
+        for(ll i=0; i<k; i++){
+            if(!mt(d,n)) return false;
+        }
+    }
+
+    return true;
+}
+
+
+
+-----------------------------------
+Euler Totient (Phi)  -->O(sqrt(N))
+-----------------------------------
+// Need seive to precompute prime
+
+ll Ephi(ll n){
+    ll i,j;
+    ll root = sqrt(n);
+    ll ret = n;
+    for(i=0; i<prime.size() and prime[i]<=root; i++){
+        if(n%prime[i]==0){
+            while(n%prime[i]==0){
+                n/=prime[i];
+            }
+            root=sqrt(n);
+            ret-=(ret/prime[i]);
+        }
+    }
+    if(n>1) ret-=(ret/n);
+    return ret;
+}
+
+
+
+---------------------------------------------
+Euler Totient (Phi) Pre-compute --> O(NlogN)
+---------------------------------------------
+
+#define mx 1000003
+ll phi[mx];
+
+void PreEphi(){
+    ll i,j;
+    for(i=0; i<mx; i++) phi[i]=i;
+    for(i=2; i<mx; i++){
+        if(phi[i]==i){
+            for(j=i; j<mx; j+=i){
+                phi[j]-=(phi[j]/i);
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        =======================================
+                                    Graph Theory
+                        =======================================
+
+
+
+
+======================================
+BFS (Breadth First Search) ---> O(V+E)
+======================================
+
+#define inf 1000000000000000000
+ll N; // N is numbers of node
+vector<ll> g[N+5]; // graph
+vecor<ll> cost[N+5]; // cost of edge
+ll dis[N+5]; // distance 
+
+ll BFS(ll st, ll ed){ // st=starting node, ed=ending node
+    for(ll i=0; i<N; i++) dis[i]=inf;
+    queue<ll>q;
+    q.push(st);
+    dis[st]=0;
+    while(!q.empty()){
+        ll u=q.front();
+        q.pop();
+        ll ucost = dis[u];
+        for(ll i=0; i<g[u].size(); i++){
+            ll v=g[u][i];
+            ll vcost = cost[u][i] + ucost;
+            if(dis[v] > vcost){
+                dis[v]=vcost;
+                q.push(v);
+            }
+        }
+    }
+    return dis[ed];
+}
+
+
+
+
+=========================
+DFS  ---> O(V+E)
+=========================
+
+#define mx 100005
+
+vector<int> g[mx]; 
+pair<int,int> dfs_time[mx];
+bool visited[mx];
+int Time = 0;
+
+void dfs(int u){
+    visited[u]=1;
+    dfs_time[u].first = Time++;
+    for(int v:g[u]){
+        if(visited[v]) continue;
+        dfs(v);
+    }
+    dfs_time[u].second = Time++;
+}
+
+
+
+
+
+========================
+Dijkstra    ---> O(V+E)
+========================
+
+#define inf 1000000000000000000
+struct Data{
+    ll node, dist;
+    bool operator < (const Data &p) const{
+        return dist > p.dist;
+    }
+};
+
+ll N;  // number of nodes
+vector<ll> g[N+5],cost[N+5];  // graph and cost of edge
+ll d[N+5];  // distance
+
+ll dijkstra(ll st, ll ed){
+    for(ll i=0; i<N; i++) d[i]=inf;
+    priority_queue<Data> q;
+    data u,v;
+    u.node=st; u.dist=0;
+    q.push(u);
+    d[st]=0;
+    while(!q.empty()){
+        u=q.top(); 
+        q.pop();
+        ll ucost=d[u.node];
+        for(ll i=0; i<g[u.node].size(); i++){
+            v.node=g[u.node][i];
+            v.dist = cost[u.node][i]+ucost;
+            if(d[v.node] > v.dist){
+                d[v.node]=v.dist;
+                q.push(v);
+            }
+        }
+    }
+    return d[ed];
+}
+
+
+
+==============================
+Floyd Warshall    ---> O(V^3)
+==============================
+
+
+init_path_print() {
+    for (int i = 0; i < NODE; i++)
+        for (int j = 0; j < NODE; j++)
+            p[i][j] = i;
+} 
+
+void floyd_warshall() {
+    for (int k = 0; k < NODE; k++) {
+        for (int i = 0; i < NODE; i++) {
+            for (int j = 0; j < NODE; j++) {
+                AdjMat[i][j] = min(AdjMat[i][j], AdjMat[i][k] + AdjMat[k][j]);
+                p[i][j] = p[k][j];
+            }
+        }
+    }
+}
+
+void printPath(int i, int j) {
+    if (i != j) printPath(i, p[i][j]);
+    printf(" %d", j);
+}
+
+
+
+
+
+-----------------------------------------
+Bellman-Ford
+-----------------------------------------
+
+
+vector<pair<pair<ll,ll>,ll>> edg; // ((u,v),w) 
+ll dis[1000];
+ll N;  //number of node
+ll E;  //number of edge
+ 
+
+
+ void bellman_ford(ll root){
+    for(int i=0; i<=N; i++){
+        dis[i]=Max;
+    }
+    dis[root]=0;
+    for(int k=1; k<N; k++){
+        for(int i=0; i<E; i++){
+            ll u = edg[i].F.F;
+            ll v = edg[i].F.S;
+            ll w = edg[i].S;
+
+            if(dis[u]!=Max and dis[u] + w < dis[v]){
+                dis[v] = dis[u] + w;
+            }
+        }
+    }
+
+    for(int i=0; i<E; i++){
+        ll u = edg[i].F.F;
+        ll v = edg[i].F.S;
+        ll w = edg[i].S;
+
+        if(dis[u]!=Max and dis[u] + w < dis[v]){
+            cout<<"Negative cycle found"<<endl;
+        }
+    }
+ }
+
+
+
+-----------------------------
+MST_KRUSKAL
+-----------------------------
+
+
+#define  MAXN   1000 // num of max node
+
+
+vector<pair<ll,pair<ll,ll>>> g;
+vector<pair<ll,ll>> e;
+ll par[MAXN];
+
+ll find_par(ll u){
+
+    return (par[u]==u) ? u: find_par(par[u]);
+}
+
+ll mst_kru(ll n){
+    sort(g.begin(), g.end());
+    for(int i=0; i<=n; i++){
+        par[i]=i;
+    }
+    ll cnt=0, ans=0;
+    for(int i=0; i<g.size(); i++){
+        ll u = g[i].second.first;
+        ll v = g[i].second.second;
+        ll x=find_par(u);
+        ll y=find_par(v);
+
+        if(x!=y){
+            cnt++;
+            ans+=g[i].first;
+            par[x]=y;
+            e.push_back(make_pair(u,v));
+            if(cnt==n-1){
+                break;
+            }
+        }
+    }
+    return ans;
+}
+
+
+int main(){
+    //input vertex and edge
+    ll n,m,i,j;
+    cin>>n>>m;
+    g.clear();
+    e.clear();
+    for(i=0; i<m; i++){
+        ll u,v,w;
+        cin>>u>>v>>w;
+        g.push_back(make_pair(w,make_pair(u,v)));
+    }
+    ll ans=mst_kru(n);
+    // weight of MST graph
+    cout<<ans<<endl;
+
+    //edges of MST graph
+    for(i=0; i<e.size(); i++){
+        cout<<e[i].first<<" -- "<<e[i].second<<endl;
+    }
+}
+
+
+
+
+
+
+
+_______________________________________________
+-----------------------------------------------
+Ford Fulkerson Algo For Max Flow --> O(E*V^3)
+_______________________________________________
+-----------------------------------------------
+
+// Ford Fulkerson Algo For Max Flow
+
+int graph[105][105],rGraph[105][105],parent[105];
+bool visited[105];
+int node;
+
+bool BFS(int s, int t){
+    memset(visited, 0, sizeof(visited));
+
+    queue<int> q;
+    q.push(s);
+    visited[s]=true;
+    parent[s]=-1;
+
+    while(!q.empty()){
+        int u=q.front();
+        q.pop();
+        for(int v=0; v<node; v++){
+            if(visited[v]==false and rGraph[u][v]>0){
+                q.push(v);
+                parent[v]=u;
+                visited[v]=true;
+            }
+        }
+    }
+    return visited[t]==true;
+}
+
+int fordFulkerson(int s, int t){
+    int u,v;
+    int max_flow=0;
+
+    for(u=0; u<node; u++){
+        for(v=0; v<node; v++){
+            rGraph[u][v]=graph[u][v];
+        }
+    }
+
+    while(BFS(s, t)){
+        int path_flow = INT_MAX;
+
+        for(v=t; v!=s; v=parent[v]){
+            u=parent[v];
+            path_flow = min(path_flow, rGraph[u][v]);
+        }
+
+        for(v=t; v!=s; v=parent[v]){
+            u=parent[v];
+            rGraph[u][v] -= path_flow;
+            rGraph[v][u] += path_flow;
+        }
+        max_flow += path_flow;
+    }
+    return max_flow;
+}
+
+
+int main(){
+    int t; // test case
+    cin>>t;
+    while(t--){
+        int n,st,ed,edge;
+        cin>>n>>st>>ed>>edge;
+        node=n;
+        mem(graph,0);
+        st--;
+        ed--;
+        while(edge--){
+            int u,v,w;
+            cin>>u>>v>>w;
+            u--;
+            v--;
+            graph[u][v]+=w;
+            graph[v][u]+=w;
+        }
+        printf("%d\n",fordFulkerson(st,ed));
+    }
+}
+
+
+
+
+
+
+--------------------------------------
+Articulation Point
+--------------------------------------
+
+
+vector<int> g[10005];
+int low[10005],d[10005];
+bool vis[10005],ap[10005];
+int tim,root;
+
+void find_atp(int u, int par){
+    tim++;
+    low[u]=d[u]=tim;
+    vis[u]=true;
+    int ChildNo=0;
+    for(int i=0; i<g[u].size(); i++){
+        int v=g[u][i];
+        if(v==par) continue;
+        if(vis[v]){
+            low[u]=min(low[u],d[v]);
+        }
+        else{
+            find_atp(v,u);
+            ChildNo=ChildNo+1;
+            low[u] = min(low[u],low[v]);
+            if(d[u] <= low[v] and u!=root){
+                ap[u]=true;
+            }
+        }
+        if(u==root and ChildNo>1){
+            ap[u]=true;
+        }
+    }
+    tim++;
+}
+
+int main(){
+    //create graph
+
+    tim=0;
+    root=0;
+    find_atp(0,-1); 
+}
+
+
+
+
+
+
+--------------------------------
+bridge
+--------------------------------
+
+
+vector<int> g[10005];
+vector<pair<int,int>> p;
+int low[10005],d[10005];
+bool vis[10005]; 
+int tim;
+
+
+void find_bridge(int u, int par){
+    tim++;
+    low[u]=d[u]=tim;
+    vis[u]=true;
+ 
+    for(int i=0; i<g[u].size(); i++){
+        int v=g[u][i];
+        if(v==par) continue;
+        if(vis[v]){
+            low[u]=min(low[u],d[v]);
+        }
+        else{
+            find_bridge(v,u);
+            low[u] = min(low[u],low[v]);
+            if(d[u] < low[v]){
+                if(u<v) p.pb(mp(u,v));
+                else p.pb(mp(v,u));
+            }
+        }
+    }
+    tim++;
+}
+
+
+int main(){
+    //create graph
+
+    tim=0;
+    find_bridge(0,-1); 
+}
+
+
+
+-------------------------------------
+Lowest Common Anchestor
+-------------------------------------
+//LCA using sparse table
+//Complexity: pre_process--> O(NlogN), query--> O(logN)
+
+
+
+#define mx 100002
+int L[mx]; //level
+int P[mx][22]; //sparse-table
+int T[mx];  //parent
+vector<int>g[mx];
+
+
+void dfs(int from,int u,int dep)
+{
+    T[u]=from;
+    L[u]=dep;
+    for(int i=0;i<(int)g[u].size();i++)
+    {
+        int v=g[u][i];
+        if(v==from) continue;
+        dfs(u,v,dep+1);
+    }
+}
+
+int lca_query(int N, int p, int q)
+  {
+      int tmp, log, i;
+
+      if (L[p] < L[q])
+          tmp = p, p = q, q = tmp;
+
+        log=1;
+      while(1) {
+        int next=log+1;
+        if((1<<next)>L[p])break;
+        log++;
+
+      }
+
+        for (i = log; i >= 0; i--)
+          if (L[p] - (1 << i) >= L[q])
+              p = P[p][i];
+
+      if (p == q)
+          return p;
+
+        for (i = log; i >= 0; i--)
+          if (P[p][i] != -1 && P[p][i] != P[q][i])
+              p = P[p][i], q = P[q][i];
+
+      return T[p];
+  }
+
+void lca_init(int N)
+  {
+      memset (P,-1,sizeof(P));
+      int i, j;
+       for (i = 0; i < N; i++)
+          P[i][0] = T[i];
+
+      for (j = 1; 1 << j < N; j++)
+         for (i = 0; i < N; i++)
+             if (P[i][j - 1] != -1)
+                 P[i][j] = P[P[i][j - 1]][j - 1];
+ }
+
+int main(void) {
+    g[0].pb(1);
+    g[0].pb(2);
+    g[2].pb(3);
+    g[2].pb(4);
+    dfs(0, 0, 0);
+    lca_init(5);
+    printf( "%d\n", lca_query(5,2,1) );
+    return 0;
+}
+ 
+
+
+--------------------------------------------
+Traveling Salesman Problem
+--------------------------------------------
+
+----> O(N^2 * logN)
+
+
+void findMinRoute(vector<vector<int> > tsp)
+{
+    int sum = 0;
+    int counter = 0;
+    int j = 0, i = 0;
+    int min = INT_MAX;
+    map<int, int> visitedRouteList;
+    visitedRouteList[0] = 1;
+    int route[tsp.size()];
+    while (i < tsp.size() && j < tsp[i].size())
+    {
+        if (counter >= tsp[i].size() - 1)
+        {
+            break;
+        }
+        if (j != i && (visitedRouteList[j] == 0))
+        {
+            if (tsp[i][j] < min)
+            {
+                min = tsp[i][j];
+                route[counter] = j + 1;
+            }
+        }
+        j++;
+        if (j == tsp[i].size())
+        {
+            sum += min;
+            min = INT_MAX;
+            visitedRouteList[route[counter] - 1] = 1;
+            j = 0;
+            i = route[counter] - 1;
+            counter++;
+        }
+    }
+    i = route[counter - 1] - 1;
+
+    for (j = 0; j < tsp.size(); j++)
+    {
+
+        if ((i != j) && tsp[i][j] < min)
+        {
+            min = tsp[i][j];
+            route[counter] = j + 1;
+        }
+    }
+    sum += min;
+    cout << (sum);
+}
+
+int main()
+{
+    vector<vector<int> > tsp = { { -1, 10, 15, 20 },
+                        { 10, -1, 35, 25 },
+                        { 15, 35, -1, 30 },
+                        { 20, 25, 30, -1 }};
+
+    findMinRoute(tsp);
+}
+
+
+
+
+
+
+---------------> O(N^2 * 2^N)
+
+
+
+int ary[10][10], completed[10], n, cost = 0;
+ 
+int least(int c) {
+  int i, nc = 999;
+  int min = 999, kmin;
+ 
+  for (i = 0; i < n; i++) {
+    if ((ary[c][i] != 0) && (completed[i] == 0))
+      if (ary[c][i] + ary[i][c] < min) {
+        min = ary[i][0] + ary[c][i];
+        kmin = ary[c][i];
+        nc = i;
+      }
+  }
+ 
+  if (min != 999)
+    cost += kmin;
+ 
+  return nc;
+}
+
+void mincost(int city) {
+  int i, ncity;
+ 
+  completed[city] = 1;
+ 
+  //printf("%d--->", city + 1);
+  ncity = least(city);
+ 
+  if (ncity == 999) {
+    ncity = 0;
+    printf("%d", ncity + 1);
+    cost += ary[city][ncity];
+ 
+    return;
+  }
+ 
+  mincost(ncity);
+}
+ 
+int main() {
+    int n = 4;
+    ary[0][0] = 0;
+    ary[0][1] = 4;
+    ary[0][2] = 1;
+    ary[1][0] = 4;
+    ary[1][1] = 0;
+    ary[1][2] = 2;
+    ary[2][0] = 1;
+    ary[2][1] = 2;
+    ary[2][1] = 0;
+    
+    int i;
+    for(i = 0 ; i < n; i++){
+        completed[i] = 0;
+    }
+    mincost(0);
+    printf("%d", cost);
+    return 0;
+}
+
+
+
+
+------------------------------------------------------
+                    SCC
+------------------------------------------------------
+
+
+stack<ll> st;
+ll vis[100000];
+vector<ll> g[1000], r[10000],comp[10000];
+
+
+void dfs(ll u){
+    vis[u]=1;
+    for(ll i=0; i<g[u].size(); i++){
+        ll v=g[u][i];
+        if(vis[v]==0){
+            dfs(v);
+        }
+    }
+    st.push(u);
+    return;
+}
+
+void dfs2(ll u, ll mark){
+    comp[mark].pb(u);
+    vis[u]=1;
+    for(ll i=0; i<r[u].size(); i++){
+        ll v=r[u][i];
+        if(vis[v]==0){
+            dfs2(v,mark);
+        }
+    }
+    return;
+}
+
+
+void SCC(ll n){
+    //st.clear();
+    while(!st.empty()){
+        st.pop();
+    }
+    mem(vis,0);
+    for(ll i=1; i<=n; i++){
+        if(vis[i]==0){
+            dfs(i);
+        }
+    }
+
+    //cout<<"chk2"<<endl;
+
+    mem(vis,0);
+    ll mark=0;
+    while(!st.empty()){
+        ll u=st.top();
+        st.pop();
+        if(vis[u]==0){
+            mark++;
+            dfs2(u,mark);
+        }
+    }
+    //cout<<"chk3"<<endl;
+
+}
+
+ 
+int main(){
+    ll n,m;
+    cin>>n>>m;
+    for(ll i=0; i<=n; i++){
+        g[i].clear();
+        r[i].clear();
+        comp[i].clear();
+    }
+
+    for(ll i=0; i<m; i++){
+        ll u,v;
+        cin>>u>>v;
+        g[u].pb(v);
+        r[v].pb(u);
+    }
+
+    SCC(n);
+
+    //cout<<"chk1"<<endl;
+
+    for(ll i=0; i<=n; i++){
+        //if(comp[i].size()==0) break;
+        cout<<i+1<<' '<<comp[i].size()<<endl;
+        for(ll j=0; j<comp[i].size(); j++){
+            cout<<comp[i][j]<<' ';
+        }
+        cout<<endl;
+    }
+}
+
+
+
+
+----------------------------------------------------------
+Euler Path
+----------------------------------------------------------
+
+
+
+// O(V + E)
+// Euler path is a path that uses every edge in graph exactly once
+const int N = 1e5 + 50;
+
+int n, in[N], out[N]; // in and out degrees
+vector<int> path;  // has the euler path in reverse order
+
+// queue<int> adj[N];
+// void dfs(int u)
+// {
+//     while(adj[u].size())
+//     {
+//         int v = adj[u].front();
+//         adj[u].pop();
+//         dfs(v);
+//     }
+//     path.push_back(u);
+// }
+
+vector<int> g[N];
+ll vis[N];
+void dfs(int u){
+    vis[u]=1;
+    for(int i=0; i<g[u].size(); i++){
+        int v=g[u][i];
+        if(vis[v]==0){
+            dfs(v);
+        }
+    }
+    path.pb(u);
+}
+
+pair<bool, int> is_eulerian() // {is eulerian, start node of dfs}
+{
+    int _s = 0, _e = 0, st = 1;
+    for(int u = 1; u < n; u++)
+    {
+        int sub = in[u] - out[u];
+        if(sub == -1)
+            ++_s, st = u;
+        else if(sub == 1)
+            ++_e;
+        else if(sub != 0)
+            return {0, -1};
+    }
+    if(_s > 1 || _e > 1 || _s + _e == 1)
+        return {0, -1};
+    return {1, st};
+}
+
+
+int main(){
+    int m;
+    cin>>n>>m;
+    for(int i=0; i<m; i++){
+        int u,v;
+        cin>>u>>v;
+        out[u]++;
+        in[v]++;
+        g[u].pb(v);
+    }
+
+    pair<bool,int> ok=is_eulerian();
+
+    cout<<ok.F<<' '<<ok.S<<endl;
+    mem(vis,0);
+    dfs(ok.S);
+    for(int i=path.size()-1; i>=0; i--){
+        cout<<path[i]<<' ';
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+=================================
+KMP  ---> O( text + pattern )
+=================================
+
+
+vector<ll> lps_build(string pattern){
+    vector<ll> lps(pattern.size());
+    ll idx=0;
+    for(ll i=1; i<pattern.size(); ){
+        if(pattern[idx] == pattern[i]){
+            lps[i]=idx+1;
+            idx++;
+            i++;
+        }
+        else{
+            if(idx != 0){
+                idx = lps[idx-1];
+            }
+            else{
+                lps[i] = idx;
+                i++; 
+            }
+        }
+    }
+    return lps;
+}
+
+vector<ll> kmp(string text, string pattern){
+    vector<ll> lps = lps_build(pattern);
+    ll i=0,j=0; // i --> text, j --> pattern
+    vector<ll> index;
+    while(i<text.size()){
+        if(text[i] == pattern[j]){
+            i++;
+            j++;
+        }
+        else{
+            if(j != 0) j=lps[j-1];
+            else i++;
+        }
+        if(j==pattern.size()){
+            index.push_back(i - pattern.size());
+            j=lps[j-1];
+        }
+    }
+    return index;
+}
+
+
+int main(){
+    string s,p;
+    cin>>s>>p;
+    Vector v= kmp(s,p);
+
+    cout<<v.size()<<endl; // total matches
+    for(ll i=0; i<v.size(); i++){
+        cout<<v[i]<<' '; // zero based index
+    }
+    cout<<endl;
+}
+
+
+
+
+
+==================================
+Z-Algo --> O(string + pattern)
+==================================
+
+vector<ll> z_algo(string str)
+{
+    ll len=str.size();
+    ll l=0, r=0, i, j;
+    vector<ll> z(len);
+    for(i=1; i<len; i++){
+        if(i>r){
+            l=r=i;
+            while(r<len and str[r]==str[r-l])
+                r++;
+            z[i]=r-l;
+            r--;
+        }
+        else{
+            ll idx=i-l;
+            if(i+z[idx] <= r){
+                z[i]=z[idx];
+            }
+            else{
+                l=i;
+                while(r<len and str[r]==str[r-l])
+                    r++;
+                z[i]=r-l;
+                r--;
+            }
+        }
+    }
+    return z;
+}
+
+
+int main()
+{
+    string str;
+    cin>>str;
+    Vector z=z_algo(str);
+
+    for(ll i=0; i<z.size(); i++)
+        cout<<z[i]<<' ';
+
+}
+
+
+
+
+===============================================================
+Manacher Algo (find longest palindromic substrings)  ---> O(N)
+===============================================================
+
+
+vector <ll> manacher(string str){ /// hash = 784265
+    ll i, j, k, l = str.size(), n = l << 1;
+    vector <ll> pal(n);
+
+    for (i = 0, j = 0, k = 0; i < n; j = max(0LL, j - k), i += k){
+        while (j <= i && (i + j + 1) < n && str[(i - j) >> 1] == str[(i + j + 1) >> 1]) j++;
+        for (k = 1, pal[i] = j; k <= i && k <= pal[i] && (pal[i] - k) != pal[i - k]; k++){
+            pal[i + k] = min(pal[i - k], pal[i] - k);
+        }
+    }
+
+    pal.pop_back();
+    return pal;
+}
+
+int main(){
+    ll t;
+    cin>>t;
+    while(t--){
+        string s;
+        cin>>s;
+        auto v=manacher(s);
+        for (auto it: v) cout<<it<<' ';
+        cout<<endl;
+    }
+}
+
+
+
+
+-----------------------------------------------------
+LCS
+-----------------------------------------------------
+
+
+int lcs(string a,string b){
+    int l1=a.size();
+    int l2=b.size();
+    //2d array for bottom-up dp
+    int dp[l1+1][l2+1];
+
+    for(int i=0;i<=l1;i++){
+        for(int j=0;j<=l2;j++){
+            if(!i || !j)
+                dp[i][j]=0;
+            else if(a[i-1] == b[j-1]){
+                dp[i][j] = dp[i-1][j-1] + 1;
+            }
+            else{   
+                dp[i][j]=max(dp[i-1][j],dp[i][j-1]);
+            }
+        }
+    }
+    return dp[l1][l2];
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    ==========================================
+                                Data Structure
+                    ==========================================
+
+
+
+--------------------------------------
+Sparse Table for min value
+--------------------------------------
+
+
+int main()
+{   
+
+    ll n;
+    cin>>n;
+
+    ll a[n];
+    for(ll i=0;i<n;i++) cin>>a[i];
+
+    ll sparse[n][(ll)log2(n)+5];
+    memset(sparse,-1,sizeof(sparse));
+    for(ll i=1;i<=n;i*=2){
+        for(ll j=0;j<n;j++){
+            if(i==1) sparse[j][(ll)log2(i)]=a[j];
+            else if(j+i<=n)
+                sparse[j][(ll)log2(i)]=min(sparse[j][(ll)log2(i)-1],sparse[j+i/2][(ll)log2(i)-1]);
+        }
+    }
+
+    for(ll i=0;i<n;i++){
+        for(ll j=0;j<=(ll)log2(n)+1;j++){
+            if(sparse[i][j]!=-1) cout<<sparse[i][j]<<" ";
+        }cout<<endl;
+    }
+
+    ll q;
+    cin>>q;
+
+    while(q--){
+        ll l,r;
+        cin>>l>>r;
+        ll d=log2(r-l+1);
+        cout<<min(sparse[l][d],sparse[r-(ll)pow(2,d)+1][d])<<endl;
+    }
+
+    return 0;
+}
+
+
+
+
+
+
+--------------------------------------------
+Segment tree
+--------------------------------------------
+
+
+
+
+
+ll a[],block[],prop[];
+
+
+void init(ll node, ll left, ll right){
+    if(left==right){
+        block[node]=a[left];
+        return;
+    }
+    ll l=2*node, r=2*node+1;
+    ll mid=(left+right)/2;
+    init(l, left, mid);
+    init(r, mid+1,right);
+    block[node]=block[l]+block[r];
+    return;
+}
+
+ll query(ll node, ll left, ll right, ll i, ll j){
+    if(right<i or left>j) return 0;
+    if(left>=i and right<=j){
+        return block[node];
+    }
+    ll l=2*node, r=2*node+1;
+    ll mid=(left+right)/2;
+    return block[node]=query(l,left,mid,i,j)+query(r,mid+1,right,i,j);
+}
+
+void upd(ll node, ll left, ll right, ll idx, ll val){
+    if(idx>right or idx<left) return;
+    if(left==right){
+        block[node]=val;
+        return;
+    }
+    ll l=2*node, r=2*node+1;
+    ll mid= (left+right)/2;
+    upd(l,left,mid,idx, val);
+    upd(r, mid+1,right,idx, val);
+    return;
+}
+
+void upd(ll node, ll left, ll right, ll i, ll j, ll val){
+    if(i>right or j<left) return;
+    if(left>=i and right<=j){
+        block[node]=(right-left+1)*val;
+        prop[node]=val;
+        return;
+    }
+    ll l=2*node, r=2*node+1;
+    ll mid=(left+right)/2;
+    upd(l,left, mid, i,j,val);
+    upd(r,mid+1,right,i,j,val);
+    block[node]=block[l]+block[r];
+    return;
+}
+
+ll query(ll node, ll left, ll right, ll i, ll j){
+    if(right<i or left>j) return 0;
+    if(left>=i and right<=j){
+        return block[node];
+    }
+    ll l=2*node, r=2*node+1;
+    ll mid=(left+right)/2;
+    if(prop[node]!=-1){
+        prop[l]=prop[node];
+        prop[r]=prop[node];
+        block[l]=(mid-left+1)*prop[node];
+        block[r]=(right-mid)*block[node];
+        prop[node]=-1;
+    }
+
+    return query(l,left, mid, i,j)+query(r,mid+1,right,i,j);
+}
+
+
+
+
+
+
+
+--------------------------------------------
+                MO's Algo
+--------------------------------------------
+
+//-------------> sum in range l to r (0 indexed)
+
+
+const int maxn = 200002;
+int K, ans[maxn], a[maxn], sum;
+ 
+struct Query{
+    int index, L, R;
+    bool operator < (const Query &other) const {
+        int block_own = L/K;
+        int block_other = other.L/K;
+        if(block_own == block_other)
+            return R < other.R;
+        return block_own < block_other;
+    }
+}query[maxn];
+ 
+void add(int index){
+    sum+=a[index];
+}
+ 
+void remove(int index){
+    sum-=a[index];
+}
+ 
+int main(){
+    int n;
+    cin>>n;
+ 
+    K = sqrt(n);
+ 
+    for(int i=0;i<n;i++){
+        cin >> a[i];
+    }
+ 
+    int q;
+    cin >> q;
+ 
+    for(int i=0;i<q;i++){
+        cin >> query[i].L >> query[i].R;
+        query[i].index = i;
+    }
+    sort(query, query+q);
+    int L=0, R=-1;
+    for(int i=0;i<q;i++){
+        while(R<query[i].R) add(++R);
+        while(L<query[i].L) remove(L++);
+        while(R>query[i].R) remove(R--);
+        while(L>query[i].L) add(--L);
+        ans[query[i].index] = sum;
+    }
+    for(int i=0;i<q;i++){
+        cout << ans[i] << "\n";
+    }
+    return 0;
+}
+ 
+
+
+//---------> Distinct element in range l to r (1 indexed)
+
+
+const int maxn = 1000005;
+ 
+int ara[maxn], ans[maxn], cnt[maxn], n, q, block_size;
+ 
+struct Query{
+    int index, L, R;
+    bool operator<(const Query& other){
+        return L/block_size < other.L/block_size ||
+        (L/block_size == other.L/block_size && R<other.R); 
+    }
+ 
+}query[maxn];
+ 
+int distinct_elements;
+ 
+void add(int idx){
+    cnt[ara[idx]]++;
+    if(cnt[ara[idx]]==1)
+        distinct_elements++;
+}
+void del(int idx){
+    cnt[ara[idx]]--;
+    if(cnt[ara[idx]]==0)
+        distinct_elements--;
+}
+int main()
+{
+    scanf("%d", &n);
+ 
+    for(int i=0;i<n;i++){
+        scanf("%d", &ara[i]);
+    }
+ 
+    block_size = sqrt(n);
+ 
+    scanf("%d", &q);
+ 
+    for(int i=0;i<q;i++){
+        scanf("%d %d", &query[i].L, &query[i].R);
+        --query[i].L;
+        --query[i].R;
+        query[i].index = i;
+    }
+ 
+    sort(query, query+q);
+ 
+    int curL = 0, curR = -1;
+    distinct_elements = 0;
+ 
+    for(int i=0;i<q;i++){
+        int query_index = query[i].index;
+        int l = query[i].L;
+        int r = query[i].R;
+ 
+        while(curL<l)
+            del(curL++);
+        while(curL>l)
+            add(--curL);
+        while(curR<r)
+            add(++curR);
+        while(curR>r)
+            del(curR--);
+        ans[query_index] = distinct_elements;
+    }
+ 
+    for(int i=0;i<q;i++){
+        printf("%d\n", ans[i]);
+    }
+    return 0;
+}
+
+
+
+
+
+------------------->
+
+
+
+const int maxn = 300005;
+int ara[maxn], cnt[maxn], n, m;
+struct query{
+    int idx, L, R;
+    query(int _idx, int _L, int _R){
+        idx = _idx;
+        L = _L;
+        R = _R; 
+    }
+};
+vector<query> Q;
+bool cmp(query a, query b)
+{
+    int sq = sqrt(n);
+    if(a.L/sq==b.L/sq)
+        return a.R<b.R;
+    return (a.L/sq<b.L/sq);
+}
+int total;
+ 
+void add(int idx)
+{
+    cnt[ara[idx]]++;
+    if(cnt[ara[idx]]==1)
+        total++;
+}
+ 
+void del(int idx)
+{
+    cnt[ara[idx]]--;
+    if(cnt[ara[idx]]==0)
+        total--;
+}
+ 
+int last[maxn];
+int mini[maxn], maxi[maxn];
+int main()
+{
+    ios_base::sync_with_stdio(0); cin.tie(NULL); cout.tie(NULL);
+    cin>>n>>m;
+    for(int i=1;i<=n;i++) {
+        mini[i] = i;
+        maxi[i] = i;
+    }
+    ordered_set os;
+    memset(last, -1, sizeof(last));
+    for(int i=0;i<m;i++) {
+        cin>>ara[i];
+        os.insert(ara[i]);
+        mini[ara[i]] = 1;
+        if(last[ara[i]]==-1){
+            int bigger = os.size() - os.order_of_key(ara[i]+1);
+            maxi[ara[i]] = max(maxi[ara[i]], ara[i]+bigger);
+        }
+        else{
+            Q.push_back(query(ara[i], last[ara[i]], i));
+        }
+        last[ara[i]]=i;
+    }
+    for(int i=1;i<=n;i++){
+        if(last[i]==-1){
+            int bigger = os.size() - os.order_of_key(i+1);
+            maxi[i] = max(maxi[i], i+bigger);
+        }
+        else Q.push_back(query(i, last[i], m-1));
+    }
+    sort(Q.begin(), Q.end(), cmp);
+    int curL = 0, curR = -1;
+    total = 0;
+    int q=Q.size();
+    for(int i = 0; i<q;i++)
+    {
+        int l, r, idx;
+        idx = Q[i].idx;
+        l = Q[i].L;
+        r = Q[i].R;
+        while(curL<l)
+            del(curL++);
+        while(curL>l)
+            add(--curL);
+        while(curR<r)
+            add(++curR);
+        while(curR>r)
+            del(curR--);
+        maxi[idx] = max(maxi[idx], total);
+    }
+    for(int i=1;i<=n;i++){
+        cout << mini[i] << " " << maxi[i] << "\n";
+    }
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------
+STL  =>   String Stream
+--------------------------------------
+
+int main(){
+    char line[5];
+    while(gets(line)){
+        stringstream ss(line);
+        int num; vector<int> v;
+        while(ss>>num) v.pb(num);
+
+        sort(v.begin(), v.end());
+
+        for(int i=0; i<v.size(); i++){
+            cout<<v[i]<<' ';
+        }
+        cout<<endl;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================
+                SHORT NOTE
+================================================
+
+#Stirling Number of 2nd Kind:
+-----------------------------
+The number of ways to partition a set of N labelled/different objects into K nonempty subsets. Define as S(N,K).
+
+    S(n,k) = S(n-1,k-1) + k*S(n-1,k)  //recurtion-dp solution
+    where, S(n,n)=1 and S(n,1)=1
+
+    ==> Binary Stirling Number of 2nd kind:
+        S(n,k)%2 = 0 -> if( (n-k) & ((k-1)/2) )
+                 = 1 -> else    
+
+
+
+#Legendre's Theorem: (Math)
+-----------------------------
+It gives the largest power of a prime p that divides factorial n. Express Ep(n!).
+
+Ep(n!) = floor(n/pow(p,1)) + floor(n/pow(p,2)) +.......+ floor(n/pow(p,i));  [ where, pow(p,i)<=n ]
+
+or, Ep(n!) = (n-Sp(n))/(p-1);   [ Here, Sp(n)=the sum of the digits in the p-based expansion of n ]
+
+
+
+# __builtin_popcount(n) ==> function returns how many bits are ON of n.
+Ex, __builtin_popcount(5)=2; (5 = 101, two bits ON)
+
+
+#  ll sum = accumulate(arr,arr+m,0LL);
+
+
+# n^1 + n^2 +........+n^r = n*(n^r - 1) / (n-1)
+# nCr + nCr-1 = n+1Cr
+
+
+
+
+dearrangement recursive d(n)=(n-1)*(d(n-1)+d(n-2))
+base case d(1)=0, d(2)=1
+
+another solution---> n! - nc1*(n-1)! + nc2*(n-2)! - ...... + (-1)^k * nck * (n-k)! + ......
+
+
+
+
+
+
+
+
+
+
+
